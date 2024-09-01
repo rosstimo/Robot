@@ -1,3 +1,4 @@
 flask
 RPi.GPIO
-picamera
+picamera2
+io

@@ -1,21 +1,18 @@
+from picamera2 import Picamera2
 from flask import Flask, Response
-from picamera import PiCamera
-from time import sleep
+import io
 
 app = Flask(__name__)
+picam2 = Picamera2()
+picam2.start_preview()
 
 def generate_frames():
-    with PiCamera() as camera:
-        camera.resolution = (640, 480)
-        camera.framerate = 24
-        sleep(2)  # Camera warm-up time
-        stream = io.BytesIO()
-        for _ in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
-            stream.seek(0)
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + stream.read() + b'\r\n')
-            stream.seek(0)
-            stream.truncate()
+    while True:
+        frame = picam2.capture_array()
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 @app.route('/video_feed')
 def video_feed():
